@@ -1,13 +1,22 @@
 <script>
 
 import { defineComponent } from 'vue'
+import TypingResults from './TypingResults.vue'
 
 export default defineComponent({
+  components: { TypingResults },
   name: 'TypingTest',
   data () {
     return {
       wordsToType: [],
-      currentWordIndex: -1
+      currentWordIndex: 0,
+      gameState: 'ready', // 'ready' -> 'running' -> 'finished' -> 'ready' -> etc
+      stats: {
+        numErrors: 0,
+        numSucceses: 0,
+        numWords: 0,
+        numWordsAttempted: 0
+      }
     }
   },
   async created() {
@@ -15,11 +24,11 @@ export default defineComponent({
   },
   methods: {
     typeLetter(event) {
-      if (!this.isGameRunning) this.startGame()
+      if (this.isGameReady) this.startGame()
 
       if (event.code === 'Space') this.moveToNextWord(event)
 
-      if (!this.isGameRunning) this.restartGame()
+      if (this.userFinishedTyping) this.stopGame()
     },
     async getWordsToType() {
       const randomId = Math.floor(Math.random() * 100)
@@ -44,26 +53,35 @@ export default defineComponent({
       this.currentWordIndex++
     },
     startGame() {
+      console.log('start')
+      this.gameState = 'running'
       this.currentWordIndex = 0
+      this.stats = { numErrors: 0, numSucceses: 0, numWords: 0, numWordsAttempted: 0 }
     },
-    restartGame() {
-      this.currentWordIndex = -1
-      this.getWordsToType()
+    stopGame() {
+      this.stats = this.generateStats()
+      this.gameState = 'finished'
+    },
+    generateStats() {
+      return {
+        numErrors: this.wordsToType.filter(w => w.state === 'error').length,
+        numSuccess: this.wordsToType.filter(w => w.state === 'success').length,
+        numWords: this.wordsToType.length,
+        numWordsAttempted: this.currentWordIndex
+      }
     }
   },
   computed: {
     isGameRunning() {
-      if (!this.userStartedTyping) return false
-      if (this.userFinishedTyping) return false
-
-      return true
+      return this.gameState === 'running'
     },
-    userStartedTyping() {
-      return this.currentWordIndex >= 0
+    isGameReady() {
+      return this.gameState === 'ready'
+    },
+    isGameFinished() {
+      return this.gameState === 'finished'
     },
     userFinishedTyping() {
-      if (!this.userStartedTyping) return false
-
       return this.currentWordIndex > this.wordsToType.length - 1
     },
     currentWordObject() {
@@ -78,16 +96,19 @@ export default defineComponent({
 
 <template>
 <div class='container'>
-  <div class='words' v-if="wordsToType.length">
-    <span class='word' :class="{'word-error': wordObject.state == 'error', 'word-success':  wordObject.state == 'success', 'word-active': wordObject == currentWordObject }" v-for="wordObject in wordsToType" :key="wordObject.index">{{wordObject.word}}</span>
+  <div class='game' v-if="!isGameFinished">
+    <div class='words' v-if="wordsToType.length">
+      <span class='word' :class="{'word-error': wordObject.state == 'error', 'word-success':  wordObject.state == 'success', 'word-active': wordObject == currentWordObject }" v-for="wordObject in wordsToType" :key="wordObject.index">{{wordObject.word}}</span>
+    </div>
+    <input ref="wordInput" class='word-input' @keydown="typeLetter">
+    <button @click="getWordsToType">Get an article</button>
   </div>
-  <input ref="wordInput" class='word-input' @keydown="typeLetter">
-  <button @click="getWordsToType">Get an article</button>
+  <typing-results v-else :stats="stats"/>
 
   <div>currentWord: {{wordsToType[currentWordIndex]?.word}}</div>
-  <div>userStartedTyping: {{ userStartedTyping }}</div>
   <div>userFinishedTyping: {{ userFinishedTyping }}</div>
   <div>isGameRunning: {{ isGameRunning }}</div>
+  <div>gameState: {{ gameState }}</div>
 </div>
 
 </template>
@@ -95,11 +116,14 @@ export default defineComponent({
 <style lang="scss" scoped>
 
 .container {
-  display: flex;
-  flex-direction: column;
   border-radius: 15px;
   background: lightgrey;
   padding: 20px;
+}
+
+.game {
+  display: flex;
+  flex-direction: column;
 }
 
 .words {
