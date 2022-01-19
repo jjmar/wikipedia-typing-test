@@ -2,7 +2,7 @@
 
 import { defineComponent } from 'vue'
 import TypingResults from './TypingResults.vue'
-import _ from 'lodash'
+import getRandomWikipediaArticle from '../services/wikipedia.js'
 
 export default defineComponent({
   components: { TypingResults },
@@ -36,18 +36,10 @@ export default defineComponent({
       }
     },
     async getWordsToType() {
-      const randomWikipediaURL = 'https://en.wikipedia.org/w/api.php?format=json&action=query&prop=extracts&exsentences=20&exintro=&explaintext=&generator=random&grnnamespace=0&origin=*'
-      const response = await fetch(randomWikipediaURL)
-      const body = await response.json().then(payload => {
-        const id = Object.entries(payload.query.pages)[0][0]
-        const articleDetails = payload.query.pages[id]
+      const articleDetails = await getRandomWikipediaArticle()
 
-        this.articleTitle = _.deburr(articleDetails.title)
-        return articleDetails.extract
-      })
-
-      const words = body.split(' ')
-      this.wordsToType = words.map((word, index) => ({ word, index, state: 'untyped' }))
+      this.articleTitle = articleDetails.articleTitle
+      this.wordsToType = articleDetails.words.map((word, index) => ({ word, index, state: 'untyped' }))
     },
     moveToNextWord(event) {
       const enteredWord = this.$refs.wordInput.value
