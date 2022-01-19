@@ -143,7 +143,6 @@ export default defineComponent({
 }
 
 .words {
-  word-wrap: break-word;
   line-height: 3rem;
   font-size: 2rem;
   word-spacing: 1rem
@@ -154,6 +153,7 @@ export default defineComponent({
 }
 
 .word {
+  display: inline-block;
   margin-right: 5px;
 }
 
