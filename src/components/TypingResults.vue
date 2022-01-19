@@ -3,7 +3,7 @@ import { defineComponent } from 'vue'
 
 export default defineComponent({
   name: 'TypingResults',
-  props: ['numSuccess', 'numError', 'numPresses'],
+  props: ['numSuccess', 'numErrors', 'numPresses'],
   computed: {
     accuracy() {
       return (this.numSuccess / this.numPresses) * 100
@@ -14,7 +14,7 @@ export default defineComponent({
 
 <template>
   <div>numSuccess: {{numSuccess}}</div>
-  <div>numError: {{numError}}</div>
+  <div>numErrors: {{numErrors}}</div>
   <div>numPresses: {{numPresses}}</div>
   <div>accuracy: {{accuracy}}</div>
 </template>

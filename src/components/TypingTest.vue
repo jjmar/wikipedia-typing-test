@@ -2,6 +2,7 @@
 
 import { defineComponent } from 'vue'
 import TypingResults from './TypingResults.vue'
+import _ from 'lodash'
 
 export default defineComponent({
   components: { TypingResults },
@@ -41,7 +42,7 @@ export default defineComponent({
         const id = Object.entries(payload.query.pages)[0][0]
         const articleDetails = payload.query.pages[id]
 
-        this.articleTitle = articleDetails.title
+        this.articleTitle = _.deburr(articleDetails.title)
         return articleDetails.extract
       })
 
@@ -132,16 +133,6 @@ export default defineComponent({
     <button @click="getWordsToType">Get an article</button>
   </div>
   <typing-results v-else v-bind="stats"/>
-
-  <!-- <div>currentWord: {{wordsToType[currentWordIndex]?.word}}</div>
-  <div>userFinishedTyping: {{ userFinishedTyping }}</div>
-  <div>isGameRunning: {{ isGameRunning }}</div>
-  <div>gameState: {{ gameState }}</div>
-  <div>expectedCharacter: {{ expectedCharacter }}</div>
-  <div>expectedCharacterIndex: {{ currentCharacterIndex }}</div>
-  <div>numAttempts: {{ this.stats.numPresses }}</div>
-  <div>numErrors: {{ this.stats.numErrors }}</div>
-  <div>numSuccess: {{ this.stats.numSuccess }}</div> -->
 </div>
 
 </template>
