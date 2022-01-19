@@ -8,14 +8,15 @@ export default defineComponent({
   name: 'TypingTest',
   data () {
     return {
+      articleTitle: '',
       wordsToType: [],
       currentWordIndex: 0,
+      currentCharacterIndex: 0,
       gameState: 'ready', // 'ready' -> 'running' -> 'finished' -> 'ready' -> etc
       stats: {
         numErrors: 0,
-        numSucceses: 0,
-        numWords: 0,
-        numWordsAttempted: 0
+        numSuccess: 0,
+        numPresses: 0
       }
     }
   },
@@ -26,49 +27,72 @@ export default defineComponent({
     typeLetter(event) {
       if (this.isGameReady) this.startGame()
 
-      if (event.code === 'Space') this.moveToNextWord(event)
-
-      if (this.userFinishedTyping) this.stopGame()
+      if (event.code === 'Space') {
+        this.moveToNextWord(event)
+        if (this.userFinishedTyping) this.stopGame()
+      } else {
+        this.moveToNextCharacter(event)
+      }
     },
     async getWordsToType() {
-      const randomId = Math.floor(Math.random() * 100)
-      const response = await fetch(`https://jsonplaceholder.typicode.com/todos/${randomId}`)
-      const body = await response.json()
+      const randomWikipediaURL = 'https://en.wikipedia.org/w/api.php?format=json&action=query&prop=extracts&exsentences=20&exintro=&explaintext=&generator=random&grnnamespace=0&origin=*'
+      const response = await fetch(randomWikipediaURL)
+      const body = await response.json().then(payload => {
+        const id = Object.entries(payload.query.pages)[0][0]
+        const articleDetails = payload.query.pages[id]
 
-      const words = body.title.split(' ')
+        this.articleTitle = articleDetails.title
+        return articleDetails.extract
+      })
+
+      const words = body.split(' ')
       this.wordsToType = words.map((word, index) => ({ word, index, state: 'untyped' }))
     },
     moveToNextWord(event) {
       const enteredWord = this.$refs.wordInput.value
       const expectedWordObj = this.currentWordObject
 
-      if (enteredWord !== expectedWordObj.word) {
-        expectedWordObj.state = 'error'
-      } else {
-        expectedWordObj.state = 'success'
-      }
+      expectedWordObj.state = enteredWord === expectedWordObj.word ? 'success' : 'error'
 
       event.preventDefault()
       this.$refs.wordInput.value = ''
+
       this.currentWordIndex++
+      this.currentCharacterIndex = 0
+    },
+    moveToNextCharacter(event) {
+      const enteredCharacter = event.code
+      const expectedCharacter = `Key${this.expectedCharacter.toUpperCase()}`
+
+      if (enteredCharacter === 'Backspace' && this.currentCharacterIndex > 0) {
+        this.currentCharacterIndex--
+        return
+      }
+
+      if (!this.isFunctionKey(enteredCharacter)) return
+
+      if (enteredCharacter === expectedCharacter) this.stats.numSuccess++
+      if (enteredCharacter !== expectedCharacter) this.stats.numErrors++
+
+      this.stats.numPresses++
+
+      if (this.currentCharacterIndex !== this.currentWordObject.word.length - 1) this.currentCharacterIndex++
     },
     startGame() {
-      console.log('start')
       this.gameState = 'running'
       this.currentWordIndex = 0
-      this.stats = { numErrors: 0, numSucceses: 0, numWords: 0, numWordsAttempted: 0 }
+      this.stats = { numErrors: 0, numSuccess: 0, numPresses: 0 } // is this needed if component rerenders?
     },
     stopGame() {
-      this.stats = this.generateStats()
       this.gameState = 'finished'
     },
-    generateStats() {
-      return {
-        numErrors: this.wordsToType.filter(w => w.state === 'error').length,
-        numSuccess: this.wordsToType.filter(w => w.state === 'success').length,
-        numWords: this.wordsToType.length,
-        numWordsAttempted: this.currentWordIndex
-      }
+    isFunctionKey(code) {
+      if (code === 'Backspace') return false
+      if (code === 'Space') return false
+      if (code === 'CapsLock') return false
+      if (code.includes('Shift')) return false
+
+      return true
     }
   },
   computed: {
@@ -85,9 +109,12 @@ export default defineComponent({
       return this.currentWordIndex > this.wordsToType.length - 1
     },
     currentWordObject() {
-      if (!this.isGameRunning) return ''
-
       return this.wordsToType[this.currentWordIndex]
+    },
+    expectedCharacter() {
+      if (!this.currentWordObject?.word) return ''
+
+      return this.currentWordObject.word[this.currentCharacterIndex]
     }
   }
 })
@@ -97,18 +124,24 @@ export default defineComponent({
 <template>
 <div class='container'>
   <div class='game' v-if="!isGameFinished">
-    <div class='words' v-if="wordsToType.length">
+    <h1>{{articleTitle}}</h1>
+    <p class='words' v-if="wordsToType.length">
       <span class='word' :class="{'word-error': wordObject.state == 'error', 'word-success':  wordObject.state == 'success', 'word-active': wordObject == currentWordObject }" v-for="wordObject in wordsToType" :key="wordObject.index">{{wordObject.word}}</span>
-    </div>
+    </p>
     <input ref="wordInput" class='word-input' @keydown="typeLetter">
     <button @click="getWordsToType">Get an article</button>
   </div>
-  <typing-results v-else :stats="stats"/>
+  <typing-results v-else v-bind="stats"/>
 
-  <div>currentWord: {{wordsToType[currentWordIndex]?.word}}</div>
+  <!-- <div>currentWord: {{wordsToType[currentWordIndex]?.word}}</div>
   <div>userFinishedTyping: {{ userFinishedTyping }}</div>
   <div>isGameRunning: {{ isGameRunning }}</div>
   <div>gameState: {{ gameState }}</div>
+  <div>expectedCharacter: {{ expectedCharacter }}</div>
+  <div>expectedCharacterIndex: {{ currentCharacterIndex }}</div>
+  <div>numAttempts: {{ this.stats.numPresses }}</div>
+  <div>numErrors: {{ this.stats.numErrors }}</div>
+  <div>numSuccess: {{ this.stats.numSuccess }}</div> -->
 </div>
 
 </template>
@@ -128,8 +161,9 @@ export default defineComponent({
 
 .words {
   word-wrap: break-word;
-  line-height: 2rem;
+  line-height: 3rem;
   font-size: 2rem;
+  word-spacing: 1rem
 }
 
 .word-input {

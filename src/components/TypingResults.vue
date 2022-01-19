@@ -3,15 +3,20 @@ import { defineComponent } from 'vue'
 
 export default defineComponent({
   name: 'TypingResults',
-  props: ['stats']
+  props: ['numSuccess', 'numError', 'numPresses'],
+  computed: {
+    accuracy() {
+      return (this.numSuccess / this.numPresses) * 100
+    }
+  }
 })
 </script>
 
 <template>
-  <div>numWords: {{stats.numWords}}</div>
-  <div>numErrors: {{stats.numErrors}}</div>
-  <div>numSuccess: {{stats.numSuccess}}</div>
-  <div>timeRemaining: {{stats.timeRemaining}}</div>
+  <div>numSuccess: {{numSuccess}}</div>
+  <div>numError: {{numError}}</div>
+  <div>numPresses: {{numPresses}}</div>
+  <div>accuracy: {{accuracy}}</div>
 </template>
 
 <style scoped lang="scss">
