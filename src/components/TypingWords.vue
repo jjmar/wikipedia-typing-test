@@ -18,7 +18,13 @@ export default defineComponent({
   <h1 class='title'>{{articleTitle}}</h1>
   <a class='link' :href="linkToArticle" target="_blank">link</a>
   <p class='words' v-if="wordsToType.length">
-    <span class='word' :class="{'word-error': wordObject.state == 'error', 'word-success':  wordObject.state == 'success', 'word-active': wordObject == currentWordObject }" v-for="wordObject in wordsToType" :key="wordObject.index">{{wordObject.word}}</span>
+    <span
+      class='word'
+      :class="{'word-error': wordObject.state == 'error', 'word-success':  wordObject.state == 'success', 'word-active': wordObject == currentWordObject }"
+      v-for="wordObject in wordsToType"
+      :key="wordObject.index">
+        {{wordObject.word}}
+    </span>
   </p>
 </template>
 
@@ -36,6 +42,9 @@ export default defineComponent({
 .words {
   line-height: 3rem;
   font-size: 2rem;
+  padding: 20px;
+  background: white;
+  border: 2px solid black;
 }
 
 .word {

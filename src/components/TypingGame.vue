@@ -135,7 +135,7 @@ export default defineComponent({
 <div class='container'>
   <div class='game' v-if="!isGameFinished">
     <typing-words :articleTitle="articleTitle" :articleId="articleId" :wordsToType="wordsToType" :currentWordObject="currentWordObject"/>
-    <typing-input v-on:typeLetter="typeLetter" v-on:restartGame="restartGame"/>
+    <typing-input v-on:typeLetter="typeLetter" v-on:restartGame="restartGame" :isGameRunning="isGameRunning"/>
   </div>
   <typing-results v-else v-bind="stats"/>
 </div>
@@ -148,6 +148,7 @@ export default defineComponent({
   border-radius: 15px;
   background: lightgrey;
   padding: 20px;
+  border: 2px solid black;
 }
 
 .game {
