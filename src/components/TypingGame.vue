@@ -134,6 +134,10 @@ export default defineComponent({
 <template>
 <div class='container'>
   <div class='game' v-if="!isGameFinished">
+    <div class='controls'>
+      <span class='timer'>timeRemaining</span>
+      <font-awesome-icon @click="restartGame" icon="sync" size="2x" />
+    </div>
     <typing-words :articleTitle="articleTitle" :articleId="articleId" :wordsToType="wordsToType" :currentWordObject="currentWordObject"/>
     <typing-input v-on:typeLetter="typeLetter" v-on:restartGame="restartGame" :isGameRunning="isGameRunning"/>
   </div>
@@ -154,5 +158,16 @@ export default defineComponent({
 .game {
   display: flex;
   flex-direction: column;
+}
+
+.controls {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 10px;
+
+  svg {
+    cursor: pointer;
+    color: green;
+  }
 }
 </style>
