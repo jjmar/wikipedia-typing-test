@@ -16,7 +16,7 @@ export default defineComponent({
   <div>numSuccess: {{numSuccess}}</div>
   <div>numErrors: {{numErrors}}</div>
   <div>numPresses: {{numPresses}}</div>
-  <div>accuracy: {{accuracy}}</div>
+  <div>accuracy: % {{accuracy}}</div>
 </template>
 
 <style scoped lang="scss">

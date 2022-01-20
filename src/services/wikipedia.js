@@ -10,7 +10,7 @@ export default async function getRandomWikipediaArticle() {
   const articleDetails = body.query.pages[articleId]
 
   return {
-    id: articleDetails.id,
+    id: articleId,
     title: articleDetails.title,
     words: deburr(articleDetails.extract).split(' ')
   }

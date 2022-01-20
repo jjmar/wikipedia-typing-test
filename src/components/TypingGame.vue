@@ -2,14 +2,21 @@
 
 import { defineComponent } from 'vue'
 import TypingResults from './TypingResults.vue'
+import TypingInput from './TypingInput.vue'
+import TypingWords from './TypingWords.vue'
 import getRandomWikipediaArticle from '../services/wikipedia.js'
 
 export default defineComponent({
-  components: { TypingResults },
-  name: 'TypingTest',
+  name: 'TypingGame',
+  components: {
+    TypingResults,
+    TypingInput,
+    TypingWords
+  },
   data () {
     return {
       articleTitle: '',
+      articleId: 0,
       wordsToType: [],
       currentWordIndex: 0,
       currentCharacterIndex: 0,
@@ -38,17 +45,19 @@ export default defineComponent({
     async getWordsToType() {
       const articleDetails = await getRandomWikipediaArticle()
 
-      this.articleTitle = articleDetails.articleTitle
+      this.articleTitle = articleDetails.title
+      this.articleId = articleDetails.id
       this.wordsToType = articleDetails.words.map((word, index) => ({ word, index, state: 'untyped' }))
     },
     moveToNextWord(event) {
-      const enteredWord = this.$refs.wordInput.value
+      const inputElement = event.srcElement
+      const enteredWord = inputElement.value
       const expectedWordObj = this.currentWordObject
 
       expectedWordObj.state = enteredWord === expectedWordObj.word ? 'success' : 'error'
 
       event.preventDefault()
-      this.$refs.wordInput.value = ''
+      inputElement.value = ''
 
       this.currentWordIndex++
       this.currentCharacterIndex = 0
@@ -73,11 +82,19 @@ export default defineComponent({
     },
     startGame() {
       this.gameState = 'running'
-      this.currentWordIndex = 0
-      this.stats = { numErrors: 0, numSuccess: 0, numPresses: 0 } // is this needed if component rerenders?
+      this.setInitialGameState()
+    },
+    async restartGame() {
+      this.gameState = 'stopped'
+      await this.getWordsToType()
+      this.setInitialGameState()
     },
     stopGame() {
       this.gameState = 'finished'
+    },
+    setInitialGameState() {
+      this.currentWordIndex = 0
+      this.stats = { numErrors: 0, numSuccess: 0, numPresses: 0 }
     },
     isFunctionKey(code) {
       if (code === 'Backspace') return false
@@ -117,12 +134,8 @@ export default defineComponent({
 <template>
 <div class='container'>
   <div class='game' v-if="!isGameFinished">
-    <h1>{{articleTitle}}</h1>
-    <p class='words' v-if="wordsToType.length">
-      <span class='word' :class="{'word-error': wordObject.state == 'error', 'word-success':  wordObject.state == 'success', 'word-active': wordObject == currentWordObject }" v-for="wordObject in wordsToType" :key="wordObject.index">{{wordObject.word}}</span>
-    </p>
-    <input ref="wordInput" class='word-input' @keydown="typeLetter">
-    <button @click="getWordsToType">Get an article</button>
+    <typing-words :articleTitle="articleTitle" :articleId="articleId" :wordsToType="wordsToType" :currentWordObject="currentWordObject"/>
+    <typing-input v-on:typeLetter="typeLetter" v-on:restartGame="restartGame"/>
   </div>
   <typing-results v-else v-bind="stats"/>
 </div>
@@ -140,32 +153,5 @@ export default defineComponent({
 .game {
   display: flex;
   flex-direction: column;
-}
-
-.words {
-  line-height: 3rem;
-  font-size: 2rem;
-  word-spacing: 1rem
-}
-
-.word-input {
-  font-size: 2rem;
-}
-
-.word {
-  display: inline-block;
-  margin-right: 5px;
-}
-
-.word-error {
-  background: red;
-}
-
-.word-success {
-  background: green;
-}
-
-.word-active {
-  text-decoration: underline;
 }
 </style>

@@ -1,16 +1,14 @@
 <template>
-  <div class="home">
-    <TypingTest/>
-  </div>
+   <TypingGame/>
 </template>
 
 <script>
-import TypingTest from '@/components/TypingTest.vue'
+import TypingGame from '@/components/TypingGame.vue'
 
 export default {
   name: 'Home',
   components: {
-    TypingTest
+    TypingGame
   }
 }
 </script>
