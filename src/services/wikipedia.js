@@ -1,7 +1,7 @@
 import deburr from 'lodash.deburr'
 
 export default async function getRandomWikipediaArticle() {
-  const url = 'https://en.wikipedia.org/w/api.php?format=json&action=query&prop=extracts&exsentences=20&exintro=&explaintext=&generator=random&grnnamespace=0&origin=*'
+  const url = 'https://en.wikipedia.org/w/api.php?format=json&action=query&prop=extracts&exsentences=10&exintro=&explaintext=&generator=random&grnnamespace=0&origin=*'
 
   const response = await fetch(url)
   const body = await response.json()
