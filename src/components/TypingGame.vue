@@ -4,6 +4,8 @@ import { defineComponent } from 'vue'
 import TypingResults from './TypingResults.vue'
 import TypingInput from './TypingInput.vue'
 import TypingWords from './TypingWords.vue'
+import TypingTimer from './TypingTimer.vue'
+
 import getRandomWikipediaArticle from '../services/wikipedia.js'
 
 export default defineComponent({
@@ -11,7 +13,8 @@ export default defineComponent({
   components: {
     TypingResults,
     TypingInput,
-    TypingWords
+    TypingWords,
+    TypingTimer
   },
   data () {
     return {
@@ -25,6 +28,10 @@ export default defineComponent({
         numErrors: 0,
         numSuccess: 0,
         numPresses: 0
+      },
+      timer: {
+        id: '',
+        timeRemaining: 60
       }
     }
   },
@@ -37,7 +44,7 @@ export default defineComponent({
 
       if (event.code === 'Space') {
         this.moveToNextWord(event)
-        if (this.userFinishedTyping) this.stopGame()
+        if (this.userFinishedTyping) this.finishGame()
       } else {
         this.moveToNextCharacter(event)
       }
@@ -83,18 +90,22 @@ export default defineComponent({
     startGame() {
       this.gameState = 'running'
       this.setInitialGameState()
+      this.timer.id = setInterval(this.decrementTimer, 1000)
     },
     async restartGame() {
-      this.gameState = 'stopped'
+      this.gameState = 'ready'
+      clearInterval(this.timer.id)
       await this.getWordsToType()
       this.setInitialGameState()
     },
-    stopGame() {
+    finishGame() {
       this.gameState = 'finished'
+      clearInterval(this.timer.id)
     },
     setInitialGameState() {
       this.currentWordIndex = 0
       this.stats = { numErrors: 0, numSuccess: 0, numPresses: 0 }
+      this.timer = { id: '', timeRemaining: 60 }
     },
     isFunctionKey(code) {
       if (code === 'Backspace') return false
@@ -103,6 +114,13 @@ export default defineComponent({
       if (code.includes('Shift')) return false
 
       return true
+    },
+    decrementTimer() {
+      this.timer.timeRemaining--
+
+      if (this.timer.timeRemaining > 0) return
+
+      this.finishGame()
     }
   },
   computed: {
@@ -135,7 +153,7 @@ export default defineComponent({
 <div class='container'>
   <div class='game' v-if="!isGameFinished">
     <div class='controls'>
-      <span class='timer'>timeRemaining</span>
+      <typing-timer :timeRemaining="timer.timeRemaining"/>
       <font-awesome-icon @click="restartGame" icon="sync" size="2x" />
     </div>
     <typing-words :articleTitle="articleTitle" :articleId="articleId" :wordsToType="wordsToType" :currentWordObject="currentWordObject"/>
